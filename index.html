@@ -1,324 +1,87 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme:light)">
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme:dark)">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎙️%3C/text%3E%3C/svg%3E">
-    <title>CodeX 语音助手</title>
-    <style>
-        :root {
-            --bg: #f1f5f9;
-            --card-bg: white;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --border: #e2e8f0;
-            --mic-bg: linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);
-            --code-bg: #0f172a;
-            --code-text: #e2e8f0;
-            --keyword: #38bdf8;
-            --string: #a3e635;
-            --comment: #64748b;
-            --number: #fbbf24;
-        }
-        .dark {
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --text-muted: #64748b;
-            --border: #334155;
-            --mic-bg: linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
-            --code-bg: #020617;
-        }
-        *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-        html,body{
-            touch-action:manipulation;
-            -webkit-overflow-scrolling:touch;
-            overscroll-behavior:none;
-            width:100%;overflow-x:hidden;
-            -webkit-text-size-adjust:100%;
-        }
-        body{
-            font-family:system-ui,-apple-system,'PingFang SC','Helvetica Neue',sans-serif;
-            background:var(--bg);min-height:100dvh;display:flex;
-            justify-content:center;align-items:flex-start;
-            transition:background .3s,color .3s;
-            -webkit-font-smoothing:antialiased;
-            -moz-osx-font-smoothing:grayscale;
-            padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
-        }
-        .card{
-            max-width:500px;width:100%;
-            background:var(--card-bg);min-height:100dvh;
-            padding:max(24px,env(safe-area-inset-top,24px)) 20px max(20px,env(safe-area-inset-bottom,20px)) 20px;
-            transition:all .3s
-        }
-        h1{font-size:1.5rem;display:flex;align-items:center;gap:8px;color:var(--text-primary);font-weight:700;letter-spacing:-.3px}
-        .badge{background:var(--border);font-size:.58rem;padding:3px 8px;border-radius:40px;color:var(--text-primary);white-space:nowrap;font-weight:500}
-        .sub{color:var(--text-secondary);margin:4px 0 18px;font-size:.82rem;border-left:3px solid var(--accent);padding-left:10px;line-height:1.4}
-        .header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-top:4px}
-        .header-actions{display:flex;gap:6px}
-        .header-actions button{box-shadow:none;padding:6px 12px;font-size:.72rem;min-height:36px;border-radius:30px;-webkit-touch-callout:none}
-
-        .mic-area{
-            background:var(--mic-bg);border-radius:48px;
-            padding:18px 16px;text-align:center;
-            margin-bottom:16px;border:1px solid var(--border)
-        }
-        .mic-row button{
-            background:var(--accent);border:none;color:white;
-            font-size:1.3rem;padding:18px 40px;border-radius:60px;
-            font-weight:700;display:flex;align-items:center;gap:10px;
-            cursor:pointer;transition:.12s;min-height:64px;
-            box-shadow:0 8px 18px rgba(59,130,246,.35);
-            -webkit-user-select:none;user-select:none;
-            width:100%;justify-content:center;
-            -webkit-touch-callout:none;
-            letter-spacing:.5px;
-            -webkit-backface-visibility:hidden;
-        }
-        .mic-row button:active{transform:scale(.96);background:var(--accent-hover)}
-        .mic-row button:disabled{opacity:.6;transform:none;cursor:not-allowed}
-        .toggle-group{display:flex;gap:8px;justify-content:center;margin-top:12px}
-        .toggle-btn{
-            background:transparent;border:1.5px solid var(--border);
-            color:var(--text-secondary);font-size:.78rem;padding:8px 16px;
-            border-radius:40px;cursor:pointer;transition:.12s;
-            box-shadow:none;font-weight:500;min-height:40px;flex:1;max-width:140px;
-            -webkit-user-select:none;user-select:none;-webkit-touch-callout:none
-        }
-        .toggle-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
-        #status{
-            background:rgba(59,130,246,.08);padding:10px 14px;border-radius:40px;
-            font-size:.8rem;margin-top:10px;color:var(--accent);
-            word-break:break-word;min-height:42px;display:flex;
-            align-items:center;justify-content:center;line-height:1.3
-        }
-        .result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-        .result-header strong{color:var(--text-primary);font-size:.82rem}
-        .result-actions{display:flex;gap:4px}
-        .result-actions button,.icon-btn{
-            box-shadow:none;padding:8px 14px;font-size:.72rem;min-height:38px;
-            -webkit-user-select:none;user-select:none;border-radius:30px;
-            -webkit-touch-callout:none
-        }
-        .result-box{
-            background:var(--code-bg);color:var(--code-text);
-            border-radius:20px;padding:14px 16px;
-            font-family:'SF Mono','Menlo','Cascadia Code','JetBrains Mono',monospace;
-            font-size:.8rem;white-space:pre-wrap;word-break:break-word;
-            margin:0 0 10px;max-height:55dvh;overflow-y:auto;
-            line-height:1.5;-webkit-overflow-scrolling:touch
-        }
-        .result-box .hl-keyword{color:var(--keyword)}
-        .result-box .hl-string{color:var(--string)}
-        .result-box .hl-comment{color:var(--comment)}
-        .result-box .hl-number{color:var(--number)}
-
-        .command-history{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
-        .history-title{font-weight:600;font-size:.8rem;color:var(--text-secondary);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-        .history-title button{min-height:36px;padding:6px 12px;font-size:.7rem;border-radius:30px}
-        .history-item{
-            background:var(--mic-bg);padding:12px 14px;border-radius:14px;
-            margin-bottom:6px;font-size:.82rem;border-left:3px solid var(--text-muted);
-            cursor:pointer;transition:.1s;-webkit-user-select:none;user-select:none;
-            -webkit-touch-callout:none
-        }
-        .history-item:active{border-left-color:var(--accent);background:var(--border)}
-        .voice-command{font-weight:600;color:var(--text-primary);font-size:.82rem}
-        .voice-response{color:var(--accent);margin-top:3px;font-family:monospace;font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        footer{font-size:.65rem;text-align:center;color:var(--text-muted);margin-top:18px;line-height:1.6;padding-bottom:env(safe-area-inset-bottom,0)}
-
-        .toast{
-            position:fixed;
-            bottom:max(28px,env(safe-area-inset-bottom,0)+12px);
-            left:50%;transform:translateX(-50%);max-width:88vw;z-index:999;
-            background:var(--card-bg);color:var(--text-primary);
-            padding:12px 24px;border-radius:40px;font-size:.85rem;
-            box-shadow:0 8px 30px rgba(0,0,0,.18);border:1px solid var(--border);
-            opacity:0;transition:opacity .25s;pointer-events:none;
-            white-space:nowrap
-        }
-        .toast.show{opacity:1}
-
-        @media (max-width:480px){
-            .card{padding:max(20px,env(safe-area-inset-top,20px)) 16px max(16px,env(safe-area-inset-bottom,16px)) 16px}
-            .mic-row button{font-size:1.15rem;padding:16px 28px;min-height:58px}
-            .toggle-btn{font-size:.74rem;min-height:38px}
-            .result-box{font-size:.76rem;padding:12px 14px;max-height:50dvh}
-            h1{font-size:1.35rem}
-        }
-        @media (prefers-reduced-motion:reduce){
-            *,*::before,*::after{transition-duration:0s!important}
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>CodeX �����������</title>
+<style>
+:root{--bg:#f1f5f9;--card-bg:white;--text-primary:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;--accent:#3b82f6;--accent-hover:#2563eb;--border:#e2e8f0;--mic-bg:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);--code-bg:#0f172a;--code-text:#e2e8f0}
+.dark{--bg:#0f172a;--card-bg:#1e293b;--text-primary:#f1f5f9;--text-secondary:#cbd5e1;--text-muted:#64748b;--border:#334155;--mic-bg:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);--code-bg:#020617}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{touch-action:manipulation;overscroll-behavior:none;width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+body{font-family:system-ui,-apple-system,'PingFang SC',sans-serif;background:var(--bg);min-height:100dvh;display:flex;justify-content:center;align-items:flex-start;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;transition:.3s}
+.card{max-width:500px;width:100%;background:var(--card-bg);min-height:100dvh;padding:max(24px,env(safe-area-inset-top,24px)) 20px max(20px,env(safe-area-inset-bottom,20px)) 20px}
+h1{font-size:1.5rem;color:var(--text-primary);font-weight:700;margin-bottom:4px}
+.sub{color:var(--text-secondary);font-size:.82rem;border-left:3px solid var(--accent);padding-left:10px;margin-bottom:16px}
+.mic-area{background:var(--mic-bg);border-radius:48px;padding:16px;text-align:center;margin-bottom:16px;border:1px solid var(--border)}
+.mic-btn{background:var(--accent);border:none;color:white;font-size:1.2rem;padding:16px 36px;border-radius:60px;font-weight:700;width:100%;cursor:pointer;min-height:58px;box-shadow:0 6px 14px rgba(59,130,246,.35);-webkit-user-select:none}
+.mic-btn:active{transform:scale(.96)}.mic-btn:disabled{opacity:.6;cursor:not-allowed}
+#status{background:rgba(59,130,246,.08);padding:10px;border-radius:40px;font-size:.8rem;margin-top:10px;color:var(--accent);min-height:40px;display:flex;align-items:center;justify-content:center}
+.result-box{background:var(--code-bg);color:var(--code-text);border-radius:20px;padding:14px 16px;font-family:monospace;font-size:.78rem;white-space:pre-wrap;word-break:break-word;margin:0 0 12px;max-height:50dvh;overflow-y:auto;line-height:1.5}
+.send-bar{display:flex;gap:8px;margin-bottom:16px}
+.send-bar button{flex:1;padding:12px;border-radius:30px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;min-height:44px}
+.btn-copy{background:var(--accent);color:white;box-shadow:0 4px 10px rgba(59,130,246,.3)}
+.btn-feishu{background:#3370ff;color:white;box-shadow:0 4px 10px rgba(51,112,255,.3)}
+footer{font-size:.65rem;text-align:center;color:var(--text-muted);margin-top:16px;padding-bottom:env(safe-area-inset-bottom,0)}
+</style>
 </head>
 <body>
 <div class="card">
-    <div class="header-row">
-        <h1>🎙️ CodeX <span class="badge">纯离线</span></h1>
-        <div class="header-actions">
-            <button id="themeBtn" class="icon-btn" style="background:var(--text-muted);padding:6px 14px">🌙</button>
-        </div>
-    </div>
-    <div class="sub">说话即编程 · 全离线 · 数据不离开本机</div>
-
-    <div class="mic-area">
-        <div class="mic-row"><button id="micBtn">🎤 点击说话</button></div>
-        <div class="toggle-group">
-            <button id="continuousToggle" class="toggle-btn active">🔄 连续</button>
-            <button id="ttsToggle" class="toggle-btn">🔊 播报</button>
-        </div>
-        <div id="status">✅ 轻点🎤或按空格键</div>
-    </div>
-
-    <div class="result-header">
-        <strong>📟 响应</strong>
-        <div class="result-actions">
-            <button id="downloadBtn" class="icon-btn" style="background:var(--warning);">⬇️</button>
-            <button id="copyBtn" class="icon-btn" style="background:var(--success);">📋</button>
-            <button id="clearRespBtn" class="icon-btn" style="background:var(--danger);">🗑️</button>
-        </div>
-    </div>
-    <div id="responseArea" class="result-box">
-        👋 试试：写排序 · 计算 128÷4 · 生成8位密码 · 5千克换算 · 时间 · 笑话
-    </div>
-
-    <div class="command-history">
-        <div class="history-title">
-            <span>📜 历史</span>
-            <button id="clearHistoryBtn" class="icon-btn" style="background:var(--danger);padding:6px 12px">🗑️</button>
-        </div>
-        <div id="historyList">
-            <div class="history-item">
-                <div class="voice-command">📢 开始</div>
-                <div class="voice-response">点 🎤 或按空格键输入语音命令</div>
-            </div>
-        </div>
-    </div>
-    <footer>⚡ 零API · 纯本地 · 支持代码下载 · 数据存于浏览器</footer>
+  <h1>??? CodeX</h1>
+  <div class="sub">�������� �� ���鷢�� Codex</div>
+  <div class="mic-area">
+    <button id="micBtn" class="mic-btn">?? ���˵��</button>
+    <div id="status">? ����</div>
+  </div>
+  <div class="send-bar">
+    <button id="copyBtn" class="btn-copy">?? ����</button>
+    <button id="feishuBtn" class="btn-feishu">?? ������</button>
+  </div>
+  <div id="responseArea" class="result-box">?? ˵������ �� ���� �� ������������ˣ���������</div>
+  <footer>���������ơ����鷢�������� �� Codex �ظ��ڷ�����</footer>
 </div>
-<div id="toast" class="toast"></div>
-
 <script>
 (function(){
-    'use strict';
-    const SK='codex_v2';
-    const ls={load(){try{const r=localStorage.getItem(SK);return r?JSON.parse(r):{}}catch{return{}}},save(d){try{const e=this.load();Object.assign(e,d);localStorage.setItem(SK,JSON.stringify(e))}catch{}}};
-    function toast(m,d){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),d||1800)}
-    function ext(c){const a=c.trim().split('\n')[0];if(a.includes('<!DOCTYPE')||a.includes('<html'))return'html';if(a.startsWith('//')||c.includes('function(')||c.includes('=>')||c.includes('console.'))return'js';if(c.includes('def ')||c.includes('import ')||c.includes('print('))return'py';return'txt'}
-    function dl(c,f){const b=new Blob([c],{type:'text/plain;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u)}
-    function hl(t){return t.split('\n').map(l=>l.replace(/\b(function|def|if|else|for|while|return|import|from|class|const|let|var|console|print|with|open|try|except|finally|async|await)\b/g,'<span class="hl-keyword">$1</span>').replace(/(["'`])(?:(?!\1|\\).|\\.)*\1/g,'<span class="hl-string">$&</span>').replace(/(#.*$)/g,'<span class="hl-comment">$1</span>').replace(/\b(\d+\.?\d*)\b/g,'<span class="hl-number">$1</span>')).join('\n')}
-    function spk(t){if(!window.speechSynthesis||t.length>200)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[#*\/<>`\n]/g,' ').substring(0,120));u.lang='zh-CN';u.rate=1.0;window.speechSynthesis.speak(u)}
+  const $=id=>document.getElementById(id);
+  const mb=$("micBtn"),st=$("status"),rp=$("responseArea"),cp=$("copyBtn"),fb=$("feishuBtn");
+  let txt="",ing=false;
 
-    function exec(s){
-        const l=s.toLowerCase().trim();
-        if(l.includes('写')||l.includes('生成')||l.includes('创建')){
-            if(l.includes('密码')||l.includes('password')){const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*',p=Array.from({length:16},()=>c[Math.random()*c.length|0]).join('');return`# 密码\n${p}\n16位 · 强`}
-            if(l.includes('排序')||l.includes('sort')){return`# Python 快速排序\ndef qsort(arr):\n  if len(arr)<=1:return arr\n  p=arr[len(arr)//2]\n  return qsort([x for x in arr if x<p])+[x for x in arr if x==p]+qsort([x for x in arr if x>p])\n\nprint(qsort([3,6,8,10,1,2,1]))`}
-            if(l.includes('斐波')||l.includes('fib')){return`# 斐波那契\ndef fib(n):\n  a,b=0,1\n  for _ in range(n):print(a,end=' ');a,b=b,a+b\nfib(10)`}
-            if(l.includes('html')){return'<!DOCTYPE html>\n<html><head><style>\n.btn{background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;border:none;font-size:16px;cursor:pointer}\n.btn:hover{background:#2563eb}\n</style></head><body><button class="btn">点击</button></body></html>'}
-            return'# 通用\ndef main():\n  print("Hello")\nmain()'
-        }
-        const m=s.match(/计算\s*([\d+\-*/().^%×÷\s]+)/);
-        if(m){try{let e=m[1].replace(/×/g,'*').replace(/÷/g,'/').replace(/\^/g,'**');const r=Function('"use strict";return('+e+')')();if(typeof r==='number'&&isFinite(r))return`🧮 ${e}\n= ${r}`}catch(e){return`❌ ${e.message}`}}
-        const u=s.match(/(\d+)\s*(米|公里|千克|斤|磅|英寸|英尺|摄氏度|华氏度)/);
-        if(u){const v=parseFloat(u[1]),t=u[2],M={'米':`${v}m=${(v/1000).toFixed(4)}km / ${(v*3.28084).toFixed(2)}ft`,'公里':`${v}km=${v*1000}m / ${(v*0.621371).toFixed(2)}英里`,'千克':`${v}kg=${(v*2.20462).toFixed(2)}lb / ${v*2}斤`,'斤':`${v}斤=${(v/2).toFixed(2)}kg`,'磅':`${v}lb=${(v*0.453592).toFixed(2)}kg`,'英寸':`${v}in=${(v*2.54).toFixed(2)}cm`,'英尺':`${v}ft=${(v*30.48).toFixed(2)}cm`,'摄氏度':`${v}°C=${(v*9/5+32).toFixed(1)}°F`,'华氏度':`${v}°F=${((v-32)*5/9).toFixed(1)}°C`};return`📐 ${M[t]||'不支持'}`}
-        if(l.includes('时间')||l.includes('几点')){const n=new Date();return`🕒 ${n.toLocaleTimeString('zh-CN')}\n📅 ${n.toLocaleDateString('zh-CN')}\n📆 星期${['日','一','二','三','四','五','六'][n.getDay()]}`}
-        if(l.includes('你好')){return'👋 你好！试试语音命令'}
-        if(l.includes('闭包')){return'📚 闭包：函数记住其词法作用域\n\nfunction outer(){\n  let c=0;\n  return ()=>++c;\n}\nconst c=outer();\nc() // 1\nc() // 2'}
-        if(l.includes('笑话')){return'😄 '+['Oct 31 = Dec 25','0对1说：你太瘦了','SQL走进酒吧：我能JOIN你们吗?'][Math.random()*3|0]}
-        return`🤖 收到\n\n💡 试试：写排序 · 计算99*99 · 生成密码 · 5千克换算 · 时间 · 笑话`
-    }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let rec=null;
+  try{rec=new SR();rec.lang="zh-CN";rec.interimResults=false;rec.maxAlternatives=1}catch{}
 
-    document.addEventListener('DOMContentLoaded',()=>{
-        const $=id=>document.getElementById(id);
-        const mb=$('micBtn'),st=$('status'),rp=$('responseArea'),hi=$('historyList');
-        const cr=$('clearRespBtn'),ch=$('clearHistoryBtn'),cp=$('copyBtn'),db=$('downloadBtn');
-        const th=$('themeBtn'),ct=$('continuousToggle'),ts=$('ttsToggle');
+  function go(){
+    if(!rec||ing)return;
+    ing=true;mb.disabled=true;mb.textContent="?? ����...";st.textContent="??? ��˵��...";
+    try{rec.start()}catch{reset()}
+  }
+  function reset(){ing=false;mb.disabled=false;mb.textContent="?? ���˵��";st.textContent="? ����"}
+  if(rec){
+    rec.onresult=function(e){
+      txt=e.results[0][0].transcript;
+      st.textContent="? "+txt;
+      rp.textContent="??? \""+txt+"\"\n\n?? �㡸���ơ��򡸷����项���͸���";
+      reset();
+    };
+    rec.onerror=function(e){st.textContent="? "+e.error;reset()};
+    rec.onend=reset;
+  }
+  mb.addEventListener("click",go);
+  document.addEventListener("keydown",function(e){if(e.code==="Space"&&!e.repeat&&e.target.tagName!=="INPUT"){e.preventDefault();go()}});
 
-        let ing=false,cont=true,ttson=false,cur='',hist=[];
+  cp.addEventListener("click",function(){
+    if(!txt&&!rp.textContent.includes("����")){txt=rp.textContent.replace(/^[^]*?"/,"").replace(/".*$/,"")}
+    navigator.clipboard.writeText(txt).then(()=>{const t=this.textContent;this.textContent="? �Ѹ���!";setTimeout(()=>this.textContent=t,1500)}).catch(()=>alert("����ʧ��"));
+  });
 
-        const sv=ls.load();
-        if(sv.theme==='dark'){document.body.classList.add('dark');th.textContent='☀️'}
-        if(sv.cont===false){cont=false;ct.classList.remove('active')}
-        if(sv.tts){ttson=true;ts.classList.add('active')}
-        if(sv.hist&&Array.isArray(sv.hist)){hist=sv.hist;rn()}
-
-        const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-        let rec=null;
-        try{rec=new SR();rec.lang='zh-CN';rec.interimResults=false;rec.maxAlternatives=1}catch{}
-
-        function go(){
-            if(!rec){st.textContent='❌ 请用Chrome';return}
-            if(ing)return;
-            ing=true;mb.disabled=true;mb.textContent='🔴 聆听...';
-            st.textContent='🎙️ 请说话...';
-            try{rec.start()}catch{stop()}
-        }
-        function stop(){
-            ing=false;mb.disabled=false;mb.textContent='🎤 点击说话';
-            st.textContent=cont?'✅ 连续模式':'✅ 就绪';
-        }
-        if(rec){
-            rec.onresult=function(e){
-                const t=e.results[0][0].transcript;
-                st.textContent='✅ '+t;
-                const r=exec(t);cur=r;rp.innerHTML=hl(r);
-                if(ttson)spk(r);
-                hist.unshift({c:t,r,at:Date.now()});
-                if(hist.length>100)hist.pop();
-                rn();ls.save({hist});
-                ing=false;mb.disabled=false;
-                if(cont)setTimeout(go,500);else stop();
-            };
-            rec.onerror=function(e){st.textContent='❌ '+e.error;stop()};
-            rec.onend=function(){if(ing){if(cont)setTimeout(go,400);else stop()}else stop()};
-        }
-        mb.addEventListener('click',go);
-        ct.addEventListener('click',function(){cont=!cont;this.classList.toggle('active');ls.save({cont});st.textContent=cont?'🔄 连续':'⏸️ 单次'});
-        ts.addEventListener('click',function(){ttson=!ttson;this.classList.toggle('active');ls.save({tts:ttson});toast(ttson?'🔊 播报开':'🔇 播报关')});
-        cp.addEventListener('click',()=>{navigator.clipboard.writeText(cur||rp.textContent).then(()=>toast('✅ 已复制')).catch(()=>toast('❌ 复制失败'))});
-        db.addEventListener('click',()=>{const c=cur||rp.textContent;dl(c,'codex.'+ext(c));toast('⬇️ 已下载')});
-        cr.addEventListener('click',()=>{rp.innerHTML='';cur=''});
-        ch.addEventListener('click',()=>{hist=[];ls.save({hist});rn();toast('🗑️ 已清空')});
-        th.addEventListener('click',function(){document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');this.textContent=d?'☀️':'🌙';ls.save({theme:d?'dark':'light'});const m=document.querySelector('meta[name=theme-color]');if(m)m.content=d?'#0f172a':'#f1f5f9'});
-
-        hi.addEventListener('click',function(e){
-            const item=e.target.closest('.history-item');
-            if(!item)return;
-            const idx=Array.from(hi.children).indexOf(item);
-            if(idx>=0&&hist[idx]){cur=hist[idx].r;rp.innerHTML=hl(hist[idx].r)}
-        });
-
-        document.addEventListener('keydown',function(e){
-            if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
-            if(e.code==='Space'&&!e.repeat){e.preventDefault();go()}
-            if(e.code==='KeyD'){e.preventDefault();db.click()}
-            if(e.code==='KeyT'){e.preventDefault();th.click()}
-        });
-
-        function rn(){
-            hi.innerHTML='';
-            if(!hist.length){hi.innerHTML='<div class="history-item"><div class="voice-command">📜 暂无历史</div></div>';return}
-            hist.slice(0,50).forEach(h=>{
-                const d=document.createElement('div');d.className='history-item';
-                d.innerHTML=`<div class="voice-command">🗣️ ${h.c}</div><div class="voice-response">${(h.r||'').split('\n')[0].substring(0,50)}</div>`;
-                hi.appendChild(d)
-            })
-        }
-        st.textContent=cont?'✅ 轻点🎤或按空格':'✅ 就绪';
+  fb.addEventListener("click",function(){
+    if(!txt)return;
+    navigator.clipboard.writeText(txt).then(()=>{
+      st.textContent="? �Ѹ��ƣ����ڴ򿪷���...";
+      window.location.href="feishu://";
+      setTimeout(()=>{st.textContent="? ճ������������˼���"},1000);
     });
+  });
 })();
 </script>
 </body>
