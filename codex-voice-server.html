@@ -1,0 +1,320 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CodeX 语音助手 + Codex AI</title>
+<style>
+:root{--bg:#f1f5f9;--card-bg:white;--text-primary:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;--accent:#3b82f6;--accent-hover:#2563eb;--danger:#ef4444;--success:#10b981;--warning:#f59e0b;--border:#e2e8f0;--mic-bg:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);--code-bg:#0f172a;--code-text:#e2e8f0;--keyword:#38bdf8;--string:#a3e635;--comment:#64748b;--number:#fbbf24;--codex-bg:rgba(59,130,246,.08)}
+.dark{--bg:#0f172a;--card-bg:#1e293b;--text-primary:#f1f5f9;--text-secondary:#cbd5e1;--text-muted:#64748b;--border:#334155;--mic-bg:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);--code-bg:#020617;--codex-bg:rgba(59,130,246,.15)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{touch-action:manipulation;-webkit-overflow-scrolling:touch;overscroll-behavior:none;width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+body{font-family:system-ui,-apple-system,'PingFang SC','Helvetica Neue',sans-serif;background:var(--bg);min-height:100dvh;display:flex;justify-content:center;align-items:flex-start;transition:background .3s,color .3s;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0}
+.card{max-width:500px;width:100%;background:var(--card-bg);min-height:100dvh;padding:max(24px,env(safe-area-inset-top,24px)) 20px max(20px,env(safe-area-inset-bottom,20px)) 20px;transition:all .3s}
+h1{font-size:1.5rem;display:flex;align-items:center;gap:8px;color:var(--text-primary);font-weight:700}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.header-actions{display:flex;gap:6px}
+.header-actions button{box-shadow:none;padding:6px 12px;font-size:.72rem;min-height:36px;border-radius:30px}
+.sub{color:var(--text-secondary);margin:4px 0 14px;font-size:.82rem;border-left:3px solid var(--accent);padding-left:10px;line-height:1.4}
+.codex-bar{background:var(--codex-bg);border-radius:14px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;font-size:.8rem}
+.codex-bar .status{display:flex;align-items:center;gap:6px;color:var(--text-secondary)}
+.codex-bar .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.codex-connect-btn{background:transparent;border:1.5px solid var(--accent);color:var(--accent);padding:6px 16px;border-radius:30px;font-size:.75rem;cursor:pointer;font-weight:600;min-height:34px}
+.codex-connect-btn.active{background:var(--accent);color:white}
+.mic-area{background:var(--mic-bg);border-radius:48px;padding:16px 14px;text-align:center;margin-bottom:14px;border:1px solid var(--border)}
+.mic-row button{background:var(--accent);border:none;color:white;font-size:1.2rem;padding:16px 36px;border-radius:60px;font-weight:700;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.12s;min-height:58px;box-shadow:0 6px 14px rgba(59,130,246,.35);-webkit-user-select:none;user-select:none;width:100%;justify-content:center}
+.mic-row button:active{transform:scale(.96);background:var(--accent-hover)}
+.mic-row button:disabled{opacity:.6;transform:none;cursor:not-allowed}
+.toggle-group{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.toggle-btn{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary);font-size:.75rem;padding:7px 14px;border-radius:40px;cursor:pointer;transition:.12s;box-shadow:none;font-weight:500;min-height:38px;flex:1;max-width:140px;-webkit-user-select:none;user-select:none}
+.toggle-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+#status{background:rgba(59,130,246,.08);padding:10px;border-radius:40px;font-size:.8rem;margin-top:10px;color:var(--accent);word-break:break-word;min-height:40px;display:flex;align-items:center;justify-content:center;line-height:1.3}
+.result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.result-header strong{color:var(--text-primary);font-size:.82rem}
+.result-actions{display:flex;gap:4px}
+.result-actions button,.icon-btn{box-shadow:none;padding:7px 12px;font-size:.7rem;min-height:36px;-webkit-user-select:none;user-select:none;border-radius:30px}
+.result-box{background:var(--code-bg);color:var(--code-text);border-radius:20px;padding:14px 16px;font-family:'SF Mono','Menlo','Cascadia Code',monospace;font-size:.78rem;white-space:pre-wrap;word-break:break-word;margin:0 0 10px;max-height:55dvh;overflow-y:auto;line-height:1.5;-webkit-overflow-scrolling:touch}
+.result-box .hl-keyword{color:var(--keyword)}.result-box .hl-string{color:var(--string)}.result-box .hl-comment{color:var(--comment)}.result-box .hl-number{color:var(--number)}
+.command-history{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.history-title{font-weight:600;font-size:.8rem;color:var(--text-secondary);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.history-title button{min-height:34px;padding:5px 10px;font-size:.7rem;border-radius:30px}
+.history-item{background:var(--mic-bg);padding:10px 12px;border-radius:14px;margin-bottom:6px;font-size:.82rem;border-left:3px solid var(--text-muted);cursor:pointer;transition:.1s;-webkit-user-select:none;user-select:none}
+.history-item:active{border-left-color:var(--accent);background:var(--border)}
+.voice-command{font-weight:600;color:var(--text-primary);font-size:.82rem}
+.voice-response{color:var(--accent);margin-top:3px;font-family:monospace;font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}footer{font-size:.65rem;text-align:center;color:var(--text-muted);margin-top:16px;line-height:1.5;padding-bottom:env(safe-area-inset-bottom,0)}
+.toast{position:fixed;bottom:max(28px,env(safe-area-inset-bottom,0)+12px);left:50%;transform:translateX(-50%);max-width:88vw;z-index:999;background:var(--card-bg);color:var(--text-primary);padding:12px 24px;border-radius:40px;font-size:.85rem;box-shadow:0 8px 30px rgba(0,0,0,.18);border:1px solid var(--border);opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.codex-badge{background:var(--accent);color:white;font-size:.55rem;padding:2px 6px;border-radius:6px;margin-left:4px;vertical-align:middle}
+.loc-badge{background:var(--text-muted);color:white;font-size:.55rem;padding:2px 6px;border-radius:6px;margin-left:4px;vertical-align:middle}
+@media(max-width:480px){.card{padding:max(20px,env(safe-area-inset-top,20px)) 16px max(16px,env(safe-area-inset-bottom,16px)) 16px}.mic-row button{font-size:1.1rem;padding:14px 28px;min-height:54px}.result-box{font-size:.74rem;padding:12px;max-height:50dvh}h1{font-size:1.35rem}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header-row">
+    <h1>🎙️ CodeX <span class="badge" style="background:var(--border);font-size:.58rem;padding:3px 8px;border-radius:40px;color:var(--text-primary);white-space:nowrap;font-weight:500">AI 连接版</span></h1>
+    <div class="header-actions">
+      <button id="themeBtn" class="icon-btn" style="background:var(--text-muted);padding:6px 14px">🌙</button>
+    </div>
+  </div>
+  <div class="sub">语音指挥 Codex AI · 本地+云端双模式</div>
+
+  <div class="codex-bar">
+    <span class="status"><span id="statusDot" class="dot" style="background:var(--text-muted)"></span> Codex <span id="codexStatus">未连接</span></span>
+    <button id="codexConnectBtn" class="codex-connect-btn">📡 连接</button>
+  </div>
+
+  <div class="mic-area">
+    <div class="mic-row"><button id="micBtn">🎤 点击说话</button></div>
+    <div class="toggle-group">
+      <button id="continuousToggle" class="toggle-btn active">🔄 连续</button>
+    </div>
+    <div id="status">✅ 就绪</div>
+  </div>
+
+  <div class="result-header">
+    <strong>📟 响应 <span id="modeBadge" class="loc-badge">本地</span></strong>
+    <div class="result-actions">
+      <button id="copyBtn" class="icon-btn" style="background:var(--success);">📋</button>
+      <button id="clearRespBtn" class="icon-btn" style="background:var(--danger);">🗑️</button>
+    </div>
+  </div>
+  <div id="responseArea" class="result-box">👋 试试语音命令，开启 Codex 连接后由 AI 处理</div>
+
+  <div class="command-history">
+    <div class="history-title">
+      <span>📜 历史</span>
+      <button id="clearHistoryBtn" class="icon-btn" style="background:var(--danger);padding:6px 12px">🗑️</button>
+    </div>
+    <div id="historyList">
+      <div class="history-item">
+        <div class="voice-command">📢 开始</div>
+        <div class="voice-response">点 📡 连接 Codex，再语音指挥</div>
+      </div>
+    </div>
+  </div>
+  <footer>⚡ 语音→Codex AI · 本地回退 · 纯离线可用</footer>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const SK="codex_v3";
+
+  // ==== 持久化 ====
+  const LS={load(){try{const r=localStorage.getItem(SK);return r?JSON.parse(r):{}}catch{return{}}},save(d){try{const e=LS.load();Object.assign(e,d);localStorage.setItem(SK,JSON.stringify(e))}catch{}}};
+
+  function toast(m,d){const e=document.getElementById("toast");e.textContent=m;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),d||1800)}
+
+  // ==== 语法高亮 ====
+  function hl(t){return t.split("\n").map(l=>l.replace(/\b(function|def|if|else|for|while|return|import|from|class|const|let|var|console|print|with|open|try|except|finally|async|await)\b/g,'<span class="hl-keyword">$1</span>').replace(/(["'"'"'`])(?:(?!\1|\\).|\\.)*\1/g,'<span class="hl-string">$&</span>').replace(/(#.*$)/g,'<span class="hl-comment">$1</span>').replace(/\b(\d+\.?\d*)\b/g,'<span class="hl-number">$1</span>')).join("\n")}
+
+  // ==== 本地命令解析器（回退用） ====
+  function localExec(s){
+    const l=s.toLowerCase().trim();
+    if(l.includes("写")||l.includes("生成")||l.includes("创建")){
+      if(l.includes("排序")){return "# Python 快速排序\ndef qsort(arr):\n  if len(arr)<=1:return arr\n  p=arr[len(arr)//2]\n  return qsort([x for x in arr if x<p])+[x for x in arr if x==p]+qsort([x for x in arr if x>p])\n\nprint(qsort([3,6,8,10,1,2,1]))"}
+      if(l.includes("斐波")||l.includes("fib")){return "# 斐波那契\ndef fib(n):\n  a,b=0,1\n  for _ in range(n):print(a,end=\" \");a,b=b,a+b\nfib(10)"}
+      if(l.includes("密码")){const c="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";return "# 密码\n"+"密码: "+Array.from({length:16},()=>c[Math.random()*c.length|0]).join("")}
+      if(l.includes("html")){return "<!DOCTYPE html>\n<html><body><h1>Hello</h1></body></html>"}
+      return "# 通用\ndef main():\n  print(\"Hello\")\nmain()"
+    }
+    const m=s.match(/计算\s*([\d+\-*/().^%×÷\s]+)/);if(m){try{let e=m[1].replace(/×/g,"*").replace(/÷/g,"/").replace(/\^/g,"**");const r=Function('"use strict";return('+e+")")();if(typeof r==="number"&&isFinite(r))return"🧮 "+e+" = "+r}catch(e){return"❌ "+e.message}}
+    const u=s.match(/(\d+)\s*(米|公里|千克|斤|磅|英寸|英尺|摄氏度|华氏度)/);if(u){const v=parseFloat(u[1]),t=u[2],M={"米":`${v}m=${(v/1000).toFixed(4)}km`,"公里":`${v}km=${v*1000}m`,"千克":`${v}kg=${(v*2.20462).toFixed(2)}lb`,"斤":`${v}斤=${(v/2).toFixed(2)}kg`,"磅":`${v}lb=${(v*0.453592).toFixed(2)}kg`,"英寸":`${v}in=${(v*2.54).toFixed(2)}cm`,"英尺":`${v}ft=${(v*30.48).toFixed(2)}cm`,"摄氏度":`${v}°C=${(v*9/5+32).toFixed(1)}°F`,"华氏度":`${v}°F=${((v-32)*5/9).toFixed(1)}°C`};return"📐 "+M[t]||"不支持"}
+    if(l.includes("时间")||l.includes("几点")){const n=new Date();return"🕒 "+n.toLocaleTimeString("zh-CN")+"\n📅 "+n.toLocaleDateString("zh-CN")}
+    if(l.includes("你好")){return"👋 你好！连接 Codex 后由 AI 处理"}
+    if(l.includes("笑话")){return"😄 "+["Oct 31 = Dec 25","0对1说：你太瘦了","SQL走进酒吧：我能JOIN你们吗?"][Math.random()*3|0]}
+    return"🤖 (本地) "+s+"\n\n💡 连接 Codex 获得 AI 处理"
+  }
+
+  // ==== DOM ====
+  function $(id){return document.getElementById(id)}
+  const mb=$("micBtn"),st=$("status"),rp=$("responseArea"),hi=$("historyList");
+  const cr=$("clearRespBtn"),ch=$("clearHistoryBtn"),cp=$("copyBtn");
+  const th=$("themeBtn"),ct=$("continuousToggle"),cxC=$("codexConnectBtn"),cxSt=$("codexStatus"),stDot=$("statusDot"),modeB=$("modeBadge");
+
+  let ing=false,cont=true,connOn=false,cur="",hist=[];
+  let pollTimer=null,cmdId=null;
+
+  // ==== 加载持久化 ====
+  const sv=LS.load();
+  if(sv.theme==="dark"){document.body.classList.add("dark");th.textContent="☀️"}
+  if(sv.cont===false){cont=false;ct.classList.remove("active")}
+  if(sv.hist&&Array.isArray(sv.hist)){hist=sv.hist;rn()}
+
+  // ==== 语音识别 ====
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let rec=null;
+  try{rec=new SR();rec.lang="zh-CN";rec.interimResults=false;rec.maxAlternatives=1}catch{}
+
+  function go(){
+    if(!rec){st.textContent="❌ 请用Chrome";return}
+    if(ing)return;
+    ing=true;mb.disabled=true;mb.textContent="🔴 聆听...";
+    st.textContent="🎙️ 请说话...";
+    try{rec.start()}catch{stop()}
+  }
+  function stop(){
+    ing=false;mb.disabled=false;mb.textContent="🎤 点击说话";
+    st.textContent=cont?"✅ 连续模式":"✅ 就绪";
+  }
+  if(rec){
+    rec.onresult=function(e){
+      const t=e.results[0][0].transcript;
+      st.textContent="✅ "+t;
+      processCommand(t);
+      ing=false;mb.disabled=false;
+      if(cont)setTimeout(go,500);else stop();
+    };
+    rec.onerror=function(e){st.textContent="❌ "+e.error;stop()};
+    rec.onend=function(){if(ing){if(cont)setTimeout(go,400)}else stop()};
+  }
+  mb.addEventListener("click",go);
+
+  // ==== 处理命令 ====
+  function processCommand(text){
+    if(connOn){
+      sendToCodex(text);
+    } else {
+      handleLocalResponse(text);
+    }
+  }
+
+  function handleLocalResponse(text){
+    const r=localExec(text);cur=r;rp.innerHTML=hl(r);
+    addHistory(text,r);
+    modeB.textContent="本地";
+    modeB.className="loc-badge";
+  }
+
+  function handleCodexResponse(text, response){
+    cur=response;rp.innerHTML=hl(response);
+    addHistory(text, response);
+    modeB.textContent="Codex";
+    modeB.className="codex-badge";
+  }
+
+  function addHistory(cmd,rsp){
+    hist.unshift({c:cmd,r:rsp,at:Date.now()});
+    if(hist.length>100)hist.pop();
+    rn();LS.save({hist});
+  }
+
+  // ==== Codex 连接 ====
+  const BASE=window.location.origin;
+
+  function sendToCodex(text){
+    cmdId=null;
+    fetch(BASE+"/api/command",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text})
+    }).then(r=>r.json()).then(d=>{
+      if(d.id){
+        cmdId=d.id;
+        st.textContent="⏳ 等待 Codex 处理...";
+        pollResponse(text);
+      } else {
+        handleLocalResponse(text);
+        toast("❌ Codex 无响应，使用本地处理");
+      }
+    }).catch(()=>{
+      handleLocalResponse(text);
+      toast("⚠️ 连接失败，使用本地处理");
+    });
+  }
+
+  function pollResponse(text){
+    if(!connOn||!cmdId){return;}
+    fetch(BASE+"/api/response?id="+cmdId)
+      .then(r=>r.json()).then(d=>{
+        if(d.status==="completed"){
+          handleCodexResponse(text, d.response);
+          st.textContent="✅ Codex 回复完成";
+        } else {
+          pollTimer=setTimeout(()=>pollResponse(text),1500);
+        }
+      }).catch(()=>{
+        st.textContent="⚠️ 轮询超时，使用本地";
+        handleLocalResponse(text);
+      });
+  }
+
+  // ==== Codex 连接切换 ====
+  cxC.addEventListener("click",function(){
+    base_url = "https://yunzhi-chu.github.io/codex-voice"
+    if(!connOn){
+      // 尝试连接
+      fetch(BASE+"/api/pending",{method:"GET"})
+        .then(r=>{
+          if(r.ok){
+            connOn=true;
+            this.textContent="🔌 已连接";
+            this.classList.add("active");
+            cxSt.textContent="已连接";
+            stDot.style.background="#10b981";
+            modeB.textContent="Codex";
+            modeB.className="codex-badge";
+            toast("✅ 已连接到 Codex 服务器");
+            LS.save({conn:true});
+          } else {
+            toast("❌ 无法连接 Codex 服务器");
+          }
+        }).catch(()=>{
+          toast("❌ 连接失败，服务器不可达");
+        });
+    } else {
+      connOn=false;
+      this.textContent="📡 连接";
+      this.classList.remove("active");
+      cxSt.textContent="未连接";
+      stDot.style.background="var(--text-muted)";
+      modeB.textContent="本地";
+      modeB.className="loc-badge";
+      if(pollTimer)clearTimeout(pollTimer);
+      toast("🔌 已断开");
+      LS.save({conn:false});
+    }
+  });
+
+  // ==== 自动恢复连接 ====
+  if(sv.conn){
+    setTimeout(()=>cxC.click(),500);
+  }
+
+  // ==== 其他事件 ====
+  ct.addEventListener("click",function(){cont=!cont;this.classList.toggle("active");LS.save({cont});st.textContent=cont?"🔄 连续":"⏸️ 单次"});
+  cp.addEventListener("click",()=>{navigator.clipboard.writeText(cur||rp.textContent).then(()=>toast("✅ 已复制")).catch(()=>toast("❌ 复制失败"))});
+  cr.addEventListener("click",()=>{rp.innerHTML="";cur=""});
+  ch.addEventListener("click",()=>{hist=[];LS.save({hist});rn();toast("🗑️ 已清空")});
+  th.addEventListener("click",function(){document.body.classList.toggle("dark");const d=document.body.classList.contains("dark");this.textContent=d?"☀️":"🌙";LS.save({theme:d?"dark":"light"})});
+
+  hi.addEventListener("click",function(e){
+    const item=e.target.closest(".history-item");
+    if(!item)return;
+    const idx=Array.from(hi.children).indexOf(item);
+    if(idx>=0&&hist[idx]){cur=hist[idx].r;rp.innerHTML=hl(hist[idx].r)}
+  });
+
+  document.addEventListener("keydown",function(e){
+    if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")return;
+    if(e.code==="Space"&&!e.repeat){e.preventDefault();go()}
+  });
+
+  function rn(){
+    hi.innerHTML="";
+    if(!hist.length){hi.innerHTML='<div class="history-item"><div class="voice-command">📜 暂无历史</div></div>';return}
+    hist.slice(0,50).forEach(h=>{
+      const d=document.createElement("div");d.className="history-item";
+      d.innerHTML='<div class="voice-command">🗣️ '+h.c+'</div><div class="voice-response">'+(h.r||"").split("\n")[0].substring(0,50)+"</div>";
+      hi.appendChild(d)
+    })
+  }
+  st.textContent="✅ 连接 Codex 获得 AI 能力";
+})();
+</script>
+</body>
+</html>
